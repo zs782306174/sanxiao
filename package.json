@@ -1,0 +1,11 @@
+{
+  "creator": {
+    "version": "3.6.2"
+  },
+  "dependencies": {
+    "protobufjs": "^7.1.2"
+  },
+  "name": "NewProject",
+  "uuid": "3af510c5-79c0-41ec-97a1-93d3d54da925",
+  "version": "3.6.2"
+}
