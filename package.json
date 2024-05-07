@@ -1,6 +1,6 @@
 {
   "creator": {
-    "version": "3.6.2"
+    "version": "3.8.2"
   },
   "dependencies": {
     "protobufjs": "^7.1.2"

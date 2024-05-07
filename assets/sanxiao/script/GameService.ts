@@ -1,14 +1,29 @@
-import { _decorator, Component, Node } from 'cc';
+
 import Service from '../../Script/shun-framework/base/Service';
 import Utils from '../../Script/shun-framework/Utils';
 export class Cell {
+
+    //实际x坐标
     x!: number;
+
+    //实际y坐标
     y!: number;
+
+    //当前临时x坐标
     startX!: number;
+
+    //当前临时y坐标
     startY!: number;
+
+    //格子类型
     type!: CellType;
+
+    //道具类型
     daoju: number = 0;
+
+    //格子状态
     state!: number
+
     constructor(x: number, y: number, type: number, startX: number, startY: number) {
         this.x = x;
         this.y = y;
@@ -39,9 +54,18 @@ export default class GameService extends Service {
     private map: Cell[][] = [];
     private typeArr: number[][] = [];
 
+    //有所变化的格子列表
     private changedCells: Cell[] = [];
+    
+    //即将被销毁的格子列表
     private emptyCells: Cell[] = [];
 
+    /**
+     * 初始化地图
+     * @param width 横向格子数量
+     * @param height 纵向格子数量
+     * @param typeArr 格子类型权重数组
+     */
     public initMap(width: number, height: number, typeArr: number[][]) {
         this.width = width;
         this.height = height;
@@ -98,7 +122,7 @@ export default class GameService extends Service {
      * @param y1 
      * @param x2 
      * @param y2 
-     * @returns 
+     * @returns 被销毁的格子
      */
     public exchange(x1: number, y1: number, x2: number, y2: number) {
 
@@ -144,7 +168,7 @@ export default class GameService extends Service {
 
     /**
      * 掉落
-     * @param emptyCells 
+     * @param emptyCells 被销毁的格子
      */
     public fall(emptyCells: Cell[]) {
         this.changedCells.length = 0;
@@ -273,13 +297,16 @@ export default class GameService extends Service {
 
     }
 
+    /**
+     * 执行格子的道具效果
+     */
     private daoju(cell: Cell) {
 
     }
 
     private createRandomCell(x: number, y: number, typeArr: number[][]) {
         let type = Utils.getRandomFromArr(typeArr)!;
-        return new Cell(x, y, type, x, this.height + y);
+        return new Cell(x, y, type, x, y);
     }
 
 

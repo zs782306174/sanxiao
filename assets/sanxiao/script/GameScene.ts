@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Widget, EventTouch, tween, v3, UITransform, utils } from 'cc';
+import { _decorator, Component, Node, Widget, EventTouch, tween, v3, UITransform } from 'cc';
 import { App } from '../../Script/shun-framework/App';
 import PoolManager from '../../Script/shun-framework/PoolManager';
 import Utils from '../../Script/shun-framework/Utils';
@@ -20,48 +20,89 @@ export class GameScene extends Component {
     @property(Node)
     private maskNode!: Node;
     
-    private gameScenePool = new PoolManager('game');
+    private gameScenePool = new PoolManager('sanxiao');
 
     private cellNodes: Array<Array<Node | null>> = [];
 
     private selectedCell: Node[] = [];
 
-    protected onLoad() {
-
-    }
-
+    /**
+     * 开始游戏
+     */
     public startGame() {
-        this.cellPanel.getComponent(Widget)!.updateAlignment();
-        this.cellPanel.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
+        this.cellPanel.getComponent(Widget)?.updateAlignment();
+        this.cellPanel.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
+        this.cellPanel.on(Node.EventType.TOUCH_MOVE, this.onTouchEnd, this);
         this.initMap();
     }
 
-    private onTouchEnd(event: EventTouch) {
+    /**
+     * 选中格子，如果选中列表有2个格子则尝试交换
+     * @param event 
+     */
+    private onTouchStart(event: EventTouch) {
         let pos = event.getUILocation();
-        let x = Math.floor(pos.x / Const.CELL_WIDTH);
-        let y = Math.floor(pos.y / Const.CELL_WIDTH);
-
+        let transform = this.cellPanel.getComponent(UITransform);
+        var p = transform?.convertToNodeSpaceAR(v3(pos.x,pos.y))
+        let x = Math.floor(p!.x / Const.CELL_WIDTH);
+        let y = Math.floor(p!.y / Const.CELL_WIDTH);
         let cellNode = this.cellNodes[y][x]!;
-
-        this.selectedCell.push(cellNode);
-        if (this.selectedCell.length == 2) {
-            this.exchange();
+        let startNode = this.selectedCell[0];
+        if (cellNode != startNode) {
+            this.selectedCell.push(cellNode);
+            cellNode.getComponent(CellView)!.selected = true;
+            if (this.selectedCell.length == 2) {
+                startNode.getComponent(CellView)!.selected = false;
+                this.exchange();
+                event.propagationStopped = true;
+            }
         }
     }
 
+    /**
+     * 拖动格子，如果选中列表有2个格子则尝试交换
+     * @param event 
+     */
+    private onTouchEnd(event: EventTouch) {
+        let startNode = this.selectedCell[0];
+        let pos = event.getUILocation();
+        let transform = this.cellPanel.getComponent(UITransform);
+        var p = transform?.convertToNodeSpaceAR(v3(pos.x,pos.y))
+        let x = Math.floor(p!.x / Const.CELL_WIDTH);
+        let y = Math.floor(p!.y / Const.CELL_WIDTH);
+
+        let cellNode = this.cellNodes[y][x]!;
+        if (cellNode != startNode) {
+            this.selectedCell.push(cellNode);
+            if (this.selectedCell.length == 2) {
+                this.exchange();
+                event.propagationStopped = true;
+            }
+        }
+    }
+
+    /**
+     * 尝试交换
+     * @returns 
+     */
     private exchange() {
         let gameService = App.ServiceCenter.get(GameService)!;
-        let cellView1 = this.selectedCell[0].getComponent(CellView);
-        let cellView2 = this.selectedCell[1].getComponent(CellView);
+        let cellView1 = this.selectedCell[0].getComponent(CellView)!;
+        let cellView2 = this.selectedCell[1].getComponent(CellView)!;
         let cell1 = cellView1!.data!;
         let cell2 = cellView2!.data!;
         if (!gameService.checkIsNeighbor(cell1, cell2)) {
+            
             this.selectedCell[0] = this.selectedCell[1];
             this.selectedCell.length = 1;
+            //两个格子不相邻，不可交换，并选中最后选中的格子
             return;
         }
         this.cellNodes[cell1.y][cell1.x] = cellView2!.node!;
         this.cellNodes[cell2.y][cell2.x] = cellView1!.node!;
+        cellView1.selected = false;
+        cellView2.selected = false;
+        //移动格子并调用Service
         tween(this.cellNodes[cell2.y][cell2.x]).to(0.2, { position: v3(cell2.x * Const.CELL_WIDTH, cell2.y * Const.CELL_WIDTH) }).start();
         tween(this.cellNodes[cell1.y][cell1.x]).to(0.2, { position: v3(cell1.x * Const.CELL_WIDTH, cell1.y * Const.CELL_WIDTH) }).call(async () => {
             let all = gameService.exchange(cell1.x, cell1.y, cell2.x, cell2.y);
@@ -72,6 +113,7 @@ export class GameScene extends Component {
                 let cells = gameService.fall(all);
                 await this.dropCells(cells);
             } else {
+                //本次操作不可消除并执行撤回动作
                 this.cellNodes[cell1.y][cell1.x] = cellView1!.node!;
                 this.cellNodes[cell2.y][cell2.x] = cellView2!.node!;
                 tween(this.cellNodes[cell1.y][cell1.x]).to(0.2, { position: v3(cell1.x * Const.CELL_WIDTH, cell1.y * Const.CELL_WIDTH) }).start();
@@ -79,7 +121,9 @@ export class GameScene extends Component {
             }
         }).start();
     }
-
+    /**
+     * 初始化地图
+     */
     private initMap() {
         let gameService = App.ServiceCenter.get(GameService)!;
         let map = gameService.getMap();
@@ -88,11 +132,14 @@ export class GameScene extends Component {
             for (let x = 0; x < gameService.width; x++) {
                 const cell = map[y][x];
                 let node = this.createCell(cell);
-                this.moveCell(node);
+                //this.moveCell(node);
             }
         }
     }
-
+    /**
+     * 格子掉落
+     * @param cells 
+     */
     private async dropCells(cells: Cell[]) {
         let all: Promise<any>[] = [];
         let gameService = App.ServiceCenter.get(GameService)!;
@@ -118,7 +165,13 @@ export class GameScene extends Component {
         }
     }
 
-    private moveCell(cellNode: Node, speed = 4) {
+    /**
+     * 移动格子
+     * @param cellNode 
+     * @param speed 
+     * @returns 
+     */
+    private moveCell(cellNode: Node, speed = 8) {
         return new Promise((resovle) => {
             let cell = cellNode.getComponent(CellView)!.data;
             let time = (cell.startY - cell.y) / speed;
@@ -130,6 +183,10 @@ export class GameScene extends Component {
 
     }
 
+    /**
+     * 批量销毁格子
+     * @param cells 
+     */
     private async crashAll(cells: Cell[]) {
         let all = [];
         for (const cell of cells) {
@@ -140,6 +197,10 @@ export class GameScene extends Component {
         await Utils.waitSomeTimes(200);
     }
 
+    /**
+     * 销毁格子
+     * @param cellNode 
+     */
     private async crash(cellNode: Node) {
         let cellView = cellNode.getComponent(CellView)!;
         if (cellView.data.daoju) {
@@ -160,6 +221,10 @@ export class GameScene extends Component {
         this.recycle(cellView.data);
     }
 
+    /**
+     * 生成格子
+     * @param cellNode 
+     */
     private createCell(cell: Cell) {
         let cellNode = this.gameScenePool.getAsync(Prefab.Cell)!;
         cellNode.getComponent(CellView)!.init(cell);
@@ -167,7 +232,10 @@ export class GameScene extends Component {
         this.cellNodes[cell.y][cell.x] = cellNode;
         return cellNode;
     }
-
+    /**
+     * 回收格子
+     * @param cellNode 
+     */
     private recycle(cell: Cell) {
 
         let cellNode = this.cellNodes[cell.y][cell.x];
@@ -175,13 +243,12 @@ export class GameScene extends Component {
         cellNode && this.gameScenePool.put(cellNode);
     }
 
-    private gameOver() {
-        this.cellPanel.off(Node.EventType.TOUCH_END, this.onTouchEnd, this);
-    }
-
     protected onDestroy() {
+        this.cellPanel.off(Node.EventType.TOUCH_START, this.onTouchStart, this);
+        this.cellPanel.off(Node.EventType.TOUCH_MOVE, this.onTouchEnd, this);
         this.gameScenePool.clearAll();
     }
+
 }
 
 

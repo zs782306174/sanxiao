@@ -1,8 +1,7 @@
 
 
 import { Component, _decorator, Sprite, Node, UITransform, Animation, SpriteFrame, } from "cc";
-import { Transform } from "stream";
-import ResManager from "../../../Script/shun-framework/ResManager";
+
 import Const from "../Const";
 import { Cell } from "../GameService";
 const { ccclass, property } = _decorator;

@@ -1,8 +1,18 @@
 {
   "general": {
     "designResolution": {
-      "width": 1080,
-      "height": 1960
+      "width": 1960,
+      "height": 1080,
+      "fitWidth": false
     }
+  },
+  "__version__": "1.0.6",
+  "fbx": {
+    "legacyFbxImporter": {
+      "visible": true
+    }
+  },
+  "script": {
+    "preserveSymlinks": true
   }
 }

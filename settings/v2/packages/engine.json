@@ -93,20 +93,32 @@
       "tween": {
         "_value": true
       },
+      "websocket": {
+        "_value": true
+      },
+      "websocket-server": {
+        "_value": false
+      },
       "terrain": {
         "_value": false
       },
+      "light-probe": {
+        "_value": true
+      },
       "tiled-map": {
-        "_value": false
+        "_value": true
       },
       "spine": {
-        "_value": false
+        "_value": true
       },
       "dragon-bones": {
-        "_value": false
+        "_value": true
       },
       "marionette": {
         "_value": true
+      },
+      "procedural-animation": {
+        "_value": false
       },
       "custom-pipeline": {
         "_value": false
@@ -118,16 +130,21 @@
       "animation",
       "audio",
       "base",
+      "dragon-bones",
       "gfx-webgl",
       "gfx-webgl2",
       "intersection-2d",
+      "light-probe",
       "marionette",
       "particle-2d",
       "profiler",
       "skeletal-animation",
+      "spine",
+      "tiled-map",
       "tween",
       "ui",
       "video",
+      "websocket",
       "webview"
     ],
     "noDeprecatedFeatures": {
@@ -137,5 +154,6 @@
   },
   "macroConfig": {
     "ENABLE_MULTI_TOUCH": false
-  }
+  },
+  "__version__": "1.0.8"
 }

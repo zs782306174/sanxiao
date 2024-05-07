@@ -1,14 +1,14 @@
 
 
-import { Component, _decorator, ProgressBar, } from "cc";
-import { GameScene } from "../game/script/GameScene";
-import GameService from "../game/script/GameService";
-import { App } from "../Script/shun-framework/App";
-import ResManager from "../Script/shun-framework/ResManager";
+import { Component, _decorator, ProgressBar, Prefab, } from "cc";
+import { App } from "./Script/shun-framework/App";
+import ResManager from "./Script/shun-framework/ResManager";
+import { GameScene } from "./sanxiao/script/GameScene";
+import GameService from "./sanxiao/script/GameService";
 const { ccclass, property } = _decorator;
 @ccclass
 export default class init extends Component {
-	
+
 	@property(ProgressBar)
 	private loadProgressBar!: ProgressBar;
 
@@ -16,7 +16,9 @@ export default class init extends Component {
 	private gameScene!: GameScene;
 
 	public async onLoad() {
-		await ResManager.loadDir('game', 'pool')
+		await ResManager.loadDir('sanxiao', 'pool', Prefab, (c, t) => {
+			this.loadProgressBar.progress = c / t;
+		})
 		this.onEnter();
 	}
 
